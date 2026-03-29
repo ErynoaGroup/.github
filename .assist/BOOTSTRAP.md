@@ -1,30 +1,18 @@
-# .github — Bootstrap
+# .github
 
-> **Read this first.** Entrypoint for context on this project.
+Organization Profile
 
-## Quick Context
+**Code:** W00 · **Repo:** [ErynoaGroup/.github](https://github.com/ErynoaGroup/.github)
 
-- **What:** ErynoaGroup Organization Profile
-- **Code:** W00
-- **Repo:** https://github.com/ErynoaGroup/.github
+---
 
-## .assist Structure
+This is `.assist/` — the project's living context. Files and folders appear here as the project needs them. Nothing is predefined, everything grows organically.
 
-| File | Purpose |
-|------|---------|
-| `BOOTSTRAP.md` | ← You are here |
-| `PROJECT.md` | Goals, stakeholders, overview |
-| `TODO.md` | Active tasks, priorities, backlog |
-| `ROADMAP.md` | Milestones, phases, timeline |
-| `REFACTORING.md` | Tech debt, planned rewrites |
-| `DECISIONS.md` | Architecture Decision Records |
-| `STACK.md` | Tech stack, dependencies |
-| `NOTES.md` | Running notes, ideas |
-| `memory/` | Organic knowledge base — files created as needed |
+Common things that might live here:
+- `todo.md` when there's work to track
+- `roadmap.md` when there's a plan
+- `decisions/` when choices need documenting
+- `memory/` when knowledge accumulates
+- whatever else makes sense
 
-## How to Use
-
-1. Read this file for orientation
-2. Check `TODO.md` for current work
-3. Check `memory/` for anything non-obvious
-4. Update what you touch
+Start here. Look around. If something's missing, create it.
