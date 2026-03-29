@@ -20,7 +20,7 @@
 | `DECISIONS.md` | Architecture Decision Records |
 | `STACK.md` | Tech stack, dependencies |
 | `NOTES.md` | Running notes, ideas |
-| `memory/` | Dynamic project knowledge |
+| `memory/` | Organic knowledge base — files created as needed |
 
 ## How to Use
 
