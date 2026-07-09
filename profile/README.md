@@ -5,7 +5,7 @@
 
 <div align="center">
 
-<img src="assets/banner.png" alt="Erynoa Group" width="720" />
+<img src="https://raw.githubusercontent.com/ErynoaGroup/.github/28142d968a56c39ca7f520a59a3143fc4005dfab/profile/assets/banner.png" alt="Erynoa Group" width="720" />
 
 <br />
 
