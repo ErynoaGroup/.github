@@ -58,17 +58,3 @@ We design and ship software used in day-to-day operations — platforms, tooling
 Most repositories here stay private. This page is the public contact surface of the group, not a product catalogue.
 
 </div>
-
-<br />
-
----
-
-<div align="center">
-
-<sub>
-  © Erynoa ·
-  <a href="https://erynoa.com">erynoa.com</a> ·
-  <a href="mailto:contact@erynoa.com">contact@erynoa.com</a>
-</sub>
-
-</div>
