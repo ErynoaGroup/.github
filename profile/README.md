@@ -1,6 +1,6 @@
 <!--
   Public organization profile only.
-  Do not list private repositories, internal tooling, or stack details.
+  No private repository names, no internal inventory.
 -->
 
 <div align="center">
@@ -11,9 +11,9 @@
 
 # Erynoa
 
-**Infrastructure and systems you can actually trust.**
+**Software and systems for real operations.**
 
-Digital sovereignty by design · Est. 2025 · Germany
+Engineering company · Est. 2025 · Germany
 
 <br />
 
@@ -29,23 +29,23 @@ Digital sovereignty by design · Est. 2025 · Germany
 
 <div align="center">
 
-### What we care about
+### Focus
 
 </div>
 
 <table>
   <tr>
     <td width="33%" align="center">
-      <strong>Trust</strong><br />
-      <sub>Systems whose behaviour you can reason about — not black boxes.</sub>
+      <strong>Build</strong><br />
+      <sub>Working software for production — not decks and demos.</sub>
     </td>
     <td width="33%" align="center">
-      <strong>Sovereignty</strong><br />
-      <sub>Control over data, infrastructure, and operational destiny.</sub>
+      <strong>Operate</strong><br />
+      <sub>Clear runbooks, boring reliability, things you can maintain.</sub>
     </td>
     <td width="33%" align="center">
-      <strong>Craft</strong><br />
-      <sub>Serious engineering over hype — quiet quality that lasts.</sub>
+      <strong>Own the stack</strong><br />
+      <sub>Prefer systems you can inspect, change, and run yourself.</sub>
     </td>
   </tr>
 </table>
@@ -54,10 +54,8 @@ Digital sovereignty by design · Est. 2025 · Germany
 
 <div align="center">
 
-### How we show up
-
-We build for operators and organizations that need **reliable digital foundations**.  
-Most of our work stays private by design. What we publish here is the public face of the group — not a catalogue of active systems.
+We design and ship software used in day-to-day operations — platforms, tooling, and integrations.  
+Most repositories here stay private. This page is the public contact surface of the group, not a product catalogue.
 
 </div>
 
