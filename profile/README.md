@@ -5,7 +5,7 @@
 
 <div align="center">
 
-<img src="assets/erynoa-banner.png" alt="Erynoa" width="720" />
+<img src="assets/banner.png" alt="Erynoa Group" width="720" />
 
 <br />
 
