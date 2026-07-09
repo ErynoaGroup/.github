@@ -1,7 +1,7 @@
 <!-- Public org profile. No private repos. -->
 
 <p align="center">
-  <img src="assets/hero.png" alt="Erynoa" width="800" />
+  <img src="assets/erynoa-banner.png" alt="Erynoa" width="720" />
 </p>
 
 <h1 align="center">Erynoa</h1>
