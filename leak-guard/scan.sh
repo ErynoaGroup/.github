@@ -25,6 +25,8 @@ case "${1:-}" in
     g -nEiI -f "$pat" | cut -d: -f1 | sed "s|^|${2:-stdin}:|" > "$out" ;;
   *)
     if [ $# -eq 0 ]; then mapfile -t files < <(git ls-files); set -- "${files[@]}"; fi
+    # Skip submodule gitlinks (directories) and symlinks; missing regular files still fail (rc 2).
+    keep=(); for f in "$@"; do [ -L "$f" ] || [ -d "$f" ] || keep+=("$f"); done; set -- ${keep[@]+"${keep[@]}"}
     if [ $# -gt 0 ]; then g -nEiIH -f "$pat" -- "$@" | cut -d: -f1,2 > "$out"; fi ;;
 esac
 if [ -s "$out" ]; then
