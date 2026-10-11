@@ -7,6 +7,8 @@
 #                   Entry: <path | narrow glob | path:line:sha256(line)>  # <reason, mandatory>
 #                   Must lie under tests/ or fixtures/; '*' only inside the last path segment; no '**', '?', '[]'.
 #                   Anything else => exit 2. See README.md.
+#   Mentions:       scan.sh --mentions "ALLOWED ACCOUNTS" < text  => counts foreign @-mentions (code spans ignored).
+#                   Digest references (@sha256:/@sha512:, e.g. image@sha256:<hex>) are never mentions.
 #   Output: hit COUNT per file only, never lines or content. Allowlisted hits: ::notice count per file + total.
 #   Exit 0 = clean, 1 = hit(s), >=2 = scanner error.
 set -euo pipefail
@@ -73,6 +75,14 @@ emit() {
   fi
 }
 case "${1:-}" in
+  --mentions)
+    allow=$(printf '%s' "${2:-}" | tr -s ' ' '|'); allow=${allow#|}; allow=${allow%|}
+    [ -n "$allow" ] || allow='-'  # no handle starts with '-': nothing allowed
+    # drop code spans, neutralise digest refs (@sha256:/@sha512:), then extract @handles
+    n=$(sed -e 's/`[^`]*`//g' -E -e 's/@sha(256|512):/AT-SHA\1:/gI' |
+        g -oE '(^|[[:space:](])@[A-Za-z0-9][A-Za-z0-9-]{0,38}' | g -vcE "@($allow)$")
+    if [ "$n" -gt 0 ]; then echo "::error::$n foreign @-mention(s) (use a code span or drop the @)"; exit 1; fi
+    echo "leak-guard: 0 foreign mentions"; exit 0 ;;
   --staged)
     while IFS= read -r f; do emit ":$f" "$f"; done < <(git diff --cached --name-only --diff-filter=ACMR) > "$out" ;;
   --stdin)
