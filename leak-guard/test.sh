@@ -37,5 +37,14 @@ printf 'x\na\n%s\nb\n' "$fake" > "$r/tests/fix.txt";    expect 1 "allow: moved l
 al "tests/fix.txt  # fake fixture"; ex=$(mktemp); printf 'tail%s\n' "$z" > "$ex"
 expect 1 "allow: extra-pattern hit never allowlisted" env LEAK_EXTRA_FILE="$ex" bash -c 'cd "$1" && "$2" tests/fix.txt' _ "$r" "$here/scan.sh"
 expect 1 "allow: never for --stdin" bash -c 'cd "$1" && printf "%s\n" "$3" | "$2" --stdin msg' _ "$r" "$here/scan.sh" "$fake"
+# allowlist counting + '*' must not cross '/'
+al "tests/fix.txt  # fake fixture"; printf 'a\n%s\nb\n' "$fake" > "$r/tests/fix.txt"
+o=$(scan_in tests/fix.txt 2>&1)
+if printf '%s\n' "$o" | grep -qx '::notice file=tests/fix.txt::1 allowlisted' && printf '%s\n' "$o" | grep -q '1 allowlisted hit(s) total'; then echo "ok   allow: notice count + total"; else echo "FAIL allow: notice count + total"; fail=1; fi
+printf '%s\n' "$o" | grep -qF "$fake" && { echo "FAIL allow: content leaked in output"; fail=1; } || echo "ok   allow: no content in output"
+mkdir -p "$r/tests/sub"; cp "$r/tests/fix.txt" "$r/tests/sub/x.txt"; cp "$r/tests/fix.txt" "$r/tests/fix-a.txt"
+al "tests/fix*.txt  # fake fixtures";   expect 1 "allow: glob does not cross /" scan_in tests/sub/x.txt
+al "tests/f*  # fake fixtures";         expect 1 "allow: tests/f* not matching tests/sub/..." scan_in tests/sub/x.txt
+expect 0 "allow: same-dir glob still suppresses" scan_in tests/fix-a.txt
 rm -rf "$r" "$ex"
 rm -rf "$bad" "$td"; exit $fail

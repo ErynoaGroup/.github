@@ -18,18 +18,18 @@ tests/x.py:12:<sha256 der Zeile>      # optional: auf genau eine Zeile festnagel
 
 Regeln, jeder Verstoß ergibt Exit 2:
 - Nur unter `tests/` oder `fixtures/`.
-- `*` nur im letzten Pfadsegment. Kein nacktes `*`, kein `**`, kein `?`/`[]`, kein `..`.
+- `*` nur im letzten Pfadsegment und matcht nie über `/` (Verzeichnisteil wird exakt verglichen). Kein nacktes `*`, kein `**`, kein `?`/`[]`, kein `..`.
 - Optional `pfad:zeile:sha256(zeileninhalt ohne Umbruch)`: Eine geänderte oder verschobene Zeile ist wieder ein Treffer.
 
 Wirkung und Grenzen:
 - Gilt nur für Basis-Muster bei Datei- und `--staged`-Scans.
 - Treffer aus `RAGFIT_LEAK_EXTRA` (`LEAK_EXTRA_FILE`) werden **nie** unterdrückt.
 - **Nie** für Commit-Messages oder PR-Text (`--stdin`).
-- Fixtures enthalten nur dokumentierte Fake-Werte: Tailnet-ID `tail` + sechs Nullen, Adressen aus dem /24 ab `100.64.0.`*n*.
+- Fixtures enthalten nur dokumentierte Fake-Werte: Tailnet-ID `tail` + sechs Nullen, Adressen aus dem /24 ab `100.64.0.`*n*. Die generischen Netzangaben (ULA-Präfix und das /10-Netz) stehen nicht als Klartext hier, sondern nur als Muster in `fixtures/` des aufrufenden Repos (z.B. `fixtures/redaction-patterns.txt`) bzw. in `patterns.txt`.
 
 ## Ausgabe
 
-Nur die Trefferzahl je Datei, keine Zeilennummern und kein Inhalt.
+Nur die Trefferzahl je Datei, keine Zeilennummern und kein Inhalt. Per Allowlist unterdrückte Treffer werden ebenfalls gezählt: je Datei `::notice file=<f>::N allowlisted` plus eine Summenzeile.
 
 ## Commit-Scan ohne Base
 

@@ -7,12 +7,12 @@
 #                   Entry: <path | narrow glob | path:line:sha256(line)>  # <reason, mandatory>
 #                   Must lie under tests/ or fixtures/; '*' only inside the last path segment; no '**', '?', '[]'.
 #                   Anything else => exit 2. See README.md.
-#   Output: hit COUNT per file only, never lines or content.
+#   Output: hit COUNT per file only, never lines or content. Allowlisted hits: ::notice count per file + total.
 #   Exit 0 = clean, 1 = hit(s), >=2 = scanner error.
 set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
-base=$(mktemp); extra=$(mktemp); out=$(mktemp); allow=$(mktemp)
-trap 'rm -f "$base" "$extra" "$out" "$allow"' EXIT
+base=$(mktemp); extra=$(mktemp); out=$(mktemp); allow=$(mktemp); acnt=$(mktemp)
+trap 'rm -f "$base" "$extra" "$out" "$allow" "$acnt"' EXIT
 grep -vE '^[[:space:]]*(#|$)' "$here/patterns.txt" > "$base"
 if [ -n "${LEAK_EXTRA_FILE:-}" ] && [ -s "$LEAK_EXTRA_FILE" ]; then
   grep -vE '^[[:space:]]*(#|$)' "$LEAK_EXTRA_FILE" > "$extra" || [ $? -eq 1 ]
@@ -54,8 +54,10 @@ allowed() { # $1 rel path, $2 line, $3 src (file or :staged)
       [ -n "$sum" ] || sum=$( { if [ "${3:0:1}" = ":" ]; then git show "$3"; else cat -- "$3"; fi; } | sed -n "${2}p" | tr -d '\n' | sha256sum | cut -d' ' -f1)
       [ "$sum" = "${BASH_REMATCH[3]}" ] && return 0
     else
+      # '*' must not cross '/': directory part literal, glob only on the last segment
+      [ "${1%/*}" = "${e%/*}" ] || continue
       # shellcheck disable=SC2053
-      [[ "$1" == $e ]] && return 0
+      [[ "${1##*/}" == ${e##*/} ]] && return 0
     fi
   done < "$allow"
   return 1
@@ -65,7 +67,7 @@ emit() {
   local src=$1 rel=$2
   rel=${rel#"$root"/}; rel=${rel#./}
   { if [ "${src:0:1}" = ":" ]; then git show "$src"; else cat -- "$src"; fi; } | g -nEiI -f "$base" | cut -d: -f1 |
-    while IFS= read -r l; do if [ -s "$allow" ] && allowed "$rel" "$l" "$src"; then :; else echo "$rel:$l"; fi; done
+    while IFS= read -r l; do if [ -s "$allow" ] && allowed "$rel" "$l" "$src"; then echo "$rel" >> "$acnt"; else echo "$rel:$l"; fi; done
   if [ -s "$extra" ]; then
     { if [ "${src:0:1}" = ":" ]; then git show "$src"; else cat -- "$src"; fi; } | g -nEiI -f "$extra" | cut -d: -f1 | sed "s|^|$rel:|"
   fi
@@ -84,6 +86,10 @@ case "${1:-}" in
       emit "$f" "$f"
     done > "$out" ;;
 esac
+if [ -s "$acnt" ]; then # allowlisted hits: count per file + total, never lines/content
+  sort "$acnt" | uniq -c | while read -r c f; do echo "::notice file=$f::$c allowlisted"; done
+  echo "leak-guard: $(wc -l < "$acnt") allowlisted hit(s) total"
+fi
 if [ -s "$out" ]; then
   cut -d: -f1 "$out" | sort | uniq -c | while read -r c f; do echo "::error file=$f::$c leak pattern hit(s) (lines/content not shown)"; done
   echo "leak-guard: $(wc -l < "$out") hit(s)"; exit 1
