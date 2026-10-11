@@ -54,6 +54,7 @@ for s in "image@sha256:$hex" "ghcr.io/x/y @sha256:$hex" "img@SHA256:$hex" "img @
 expect 1 "mention: @someuser hit" m "hi @someuser"
 expect 1 "mention: @someuser next to digest hit" m "img@sha256:$hex cc @someuser"
 expect 1 "mention: @sha256user still hit" m "ping @sha256user"
+for s in "ping @sha256 x" "ping @sha256-x" "ping @sha256." "ping @sha512 x"; do expect 1 "mention: '${s#ping }' (ohne Doppelpunkt) hit" m "$s"; done
 expect 0 "mention: allowed account" m "thanks @NiklasJavier"
 expect 0 "mention: code span ignored" m 'see `@someuser`'
 rm -rf "$bad" "$td"; exit $fail
