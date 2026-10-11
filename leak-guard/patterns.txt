@@ -1,0 +1,14 @@
+# Base leak patterns (ERE, case-insensitive). Regex only - never put real names/IPs here.
+# Tailscale MagicDNS suffix
+\.ts\.net\b
+# Tailnet ID label
+\btail[0-9a-f]{6}\b
+# Tailscale CGNAT range (shared address space /10)
+\b100\.(6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])\.[0-9]{1,3}\.[0-9]{1,3}\b
+# Common secret shapes
+\bgh[pousr]_[A-Za-z0-9]{36,}\b
+\bgithub_pat_[A-Za-z0-9_]{60,}\b
+\bAKIA[0-9A-Z]{16}\b
+-----BEGIN ([A-Z]+ )?PRIVATE KEY-----
+\bAGE-SECRET-KEY-1[0-9A-Z]{58}\b
+\btskey-(auth|api|client)-[A-Za-z0-9-]{10,}\b
