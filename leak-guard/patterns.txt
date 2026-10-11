@@ -3,6 +3,8 @@
 \.ts\.net\b
 # Tailnet ID label
 \btail[0-9a-f]{4,}\b
+# Hostnames with Tailnet ID suffix (Tailscale operator / bucket hostnames)
+-ts-[0-9a-f]{6}\b
 # Tailscale CGNAT range (shared address space /10)
 \b100\.(6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])\.[0-9]{1,3}\.[0-9]{1,3}\b
 # Tailscale IPv6 ULA /48 (regex only)
