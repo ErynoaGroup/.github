@@ -12,4 +12,23 @@ expect 2 "broken pattern => rc 2" env LEAK_EXTRA_FILE="$bad" bash -c 'printf "x\
 expect 2 "missing file => rc 2" "$here/scan.sh" /nonexistent-leak-guard-file
 td=$(mktemp -d); mkdir "$td/sub"; ln -s /nonexistent "$td/dangling"; printf "ok\n" > "$td/f"
 expect 0 "skip dir + dangling symlink" "$here/scan.sh" "$td/sub" "$td/dangling" "$td/f"
+# --- allowlist -----------------------------------------------------------
+r=$(mktemp -d); ( cd "$r" && git init -q . )
+printf 'a\n%s\nb\n' "$ts2" > "$r/fix.txt"
+h=$(sed -n 2p "$r/fix.txt" | tr -d '\n' | sha256sum | cut -d' ' -f1)
+scan_in() { ( cd "$r" && "$here/scan.sh" fix.txt ); }
+printf 'fix.txt:2:%s  # synthetic redaction sample\n' "$h" > "$r/.leak-guard-allow"
+expect 0 "allowlist: exact match suppresses" scan_in
+printf 'fix.txt:2:%s\n' "$h" > "$r/.leak-guard-allow"
+expect 2 "allowlist: entry without reason => rc 2" scan_in
+printf 'fix.txt:*:%s  # wildcard\n' "$h" > "$r/.leak-guard-allow"
+expect 2 "allowlist: wildcard => rc 2" scan_in
+printf '*.txt:2:%s  # wildcard\n' "$h" > "$r/.leak-guard-allow"
+expect 2 "allowlist: path glob => rc 2" scan_in
+printf 'fix.txt:2:%s  # synthetic redaction sample\n' "$h" > "$r/.leak-guard-allow"
+printf 'a\n%s changed\nb\n' "$ts2" > "$r/fix.txt"
+expect 1 "allowlist: changed content => hit" scan_in
+printf 'x\na\n%s\nb\n' "$ts2" > "$r/fix.txt"
+expect 1 "allowlist: moved line => hit" scan_in
+rm -rf "$r"
 rm -rf "$bad" "$td"; exit $fail
