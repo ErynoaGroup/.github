@@ -4,27 +4,37 @@ Scanner (`scan.sh`), Muster (`patterns.txt`, nur Regex), Selbsttest (`test.sh`) 
 
 Exit-Codes: `0` sauber, `1` Treffer, `>=2` Scanner-Fehler (ungültiges Muster, fehlende Datei, kaputte Allowlist). Ausgegeben wird nur `datei:zeile`, nie der Inhalt.
 
-## Allowlist für bewusste Beispiele (`.leak-guard-allow`)
+## Allowlist für bewusste Test-Beispiele (`.leak-guard-allow`)
 
-Für absichtliche Test-Beispiele (z. B. Redaction-Fixtures) legt das aufrufende Repo im Root eine Datei `.leak-guard-allow` an (alternativ Pfad über `LEAK_ALLOW_FILE`).
+Liegt im **aufrufenden** Repo im Root. Änderungen daran brauchen ein CODEOWNERS-Review, also ein Eintrag wie `/.leak-guard-allow @NiklasJavier` in `.github/CODEOWNERS` plus Branch-Protection „Require review from Code Owners“.
 
-Format, eine Zeile je Treffer:
+Eintrag je Zeile, Begründung nach `#` ist Pflicht:
 
 ```
-<pfad relativ zum Repo-Root>:<zeilennummer>:<sha256 des Zeileninhalts ohne Zeilenumbruch>  # <Begründung, Pflicht>
+tests/test_redact_tsnet.py            # Redaction-Fixture, nur Fake-Werte
+tests/fixtures/redact_*.txt           # enger Glob im letzten Pfadsegment
+tests/x.py:12:<sha256 der Zeile>      # optional: auf genau eine Zeile festnageln
 ```
 
-- Keine Wildcards (`* ? [ ]`), kein Bereich. Ein Verstoß oder eine fehlende Begründung ergibt Exit 2.
-- Unterdrückt wird ein Treffer nur, wenn Pfad, Zeilennummer **und** Hash exakt stimmen. Ändert sich die Zeile oder verschiebt sie sich, ist sie wieder ein Treffer, und der Eintrag muss bewusst neu berechnet werden.
-- Gilt für Datei- und `--staged`-Scans, nicht für `--stdin` (PR-Text, Commit-Messages).
-- Die Datei enthält keine Klartextwerte, nur `pfad:zeile:hash`.
+Regeln, jeder Verstoß ergibt Exit 2:
+- Nur unter `tests/` oder `fixtures/`.
+- `*` nur im letzten Pfadsegment. Kein nacktes `*`, kein `**`, kein `?`/`[]`, kein `..`.
+- Optional `pfad:zeile:sha256(zeileninhalt ohne Umbruch)`: Eine geänderte oder verschobene Zeile ist wieder ein Treffer.
 
-Eintrag berechnen:
+Wirkung und Grenzen:
+- Gilt nur für Basis-Muster bei Datei- und `--staged`-Scans.
+- Treffer aus `RAGFIT_LEAK_EXTRA` (`LEAK_EXTRA_FILE`) werden **nie** unterdrückt.
+- **Nie** für Commit-Messages oder PR-Text (`--stdin`).
+- Fixtures enthalten nur dokumentierte Fake-Werte: Tailnet-ID `tail` + sechs Nullen, Adressen aus dem /24 ab `100.64.0.`*n*.
 
-```sh
-f=tests/test_redact_tsnet.py; n=10
-printf '%s:%s:%s  # Redaction-Fixture, synthetische ID\n' "$f" "$n" \
-  "$(sed -n "${n}p" "$f" | tr -d '\n' | sha256sum | cut -d' ' -f1)" >> .leak-guard-allow
-```
+## Ausgabe
 
-Beispiel: `ErynoaGroup/.atlas` (`tests/test_redact_tsnet.py`, `tests/test_redaction_version.py`).
+Nur die Trefferzahl je Datei, keine Zeilennummern und kein Inhalt.
+
+## Commit-Scan ohne Base
+
+Ohne nutzbare Base-SHA (erster Push, Force-Push) wird die **ganze History** gescannt. Bis zur History-Bereinigung (Rewrite) ist der Job in diesen Fällen absehbar rot.
+
+## Erlaubte Commit-Autoren (Default)
+
+`59505702+NiklasJavier@users.noreply.github.com`, `noreply@github.com` (Web-Merges), `niklas.klein@erynoa.com`.

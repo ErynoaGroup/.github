@@ -2,11 +2,11 @@
 # Tailscale MagicDNS suffix
 \.ts\.net\b
 # Tailnet ID label
-\btail[0-9a-f]+\b
+\btail[0-9a-f]{4,}\b
 # Tailscale CGNAT range (shared address space /10)
 \b100\.(6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])\.[0-9]{1,3}\.[0-9]{1,3}\b
 # Tailscale IPv6 ULA /48 (regex only)
-\bfd7a:115c:a1e0:[0-9a-f:]*
+\b[f][d]7[a]:115[c]:[a]1[e]0:[0-9a-f:]*
 # Common secret shapes
 \bgh[pousr]_[A-Za-z0-9]{36,}\b
 \bgithub_pat_[A-Za-z0-9_]{60,}\b

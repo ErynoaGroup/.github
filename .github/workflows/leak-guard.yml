@@ -16,7 +16,7 @@ on:
       allowed_authors:
         description: "Space-separated regexes of allowed commit author/committer emails"
         type: string
-        default: 'niklas\.klein@erynoa\.com [0-9]+\+[A-Za-z0-9-]+@users\.noreply\.github\.com noreply@github\.com'
+        default: '59505702\+NiklasJavier@users\.noreply\.github\.com noreply@github\.com niklas\.klein@erynoa\.com'
     secrets:
       RAGFIT_LEAK_EXTRA:
         required: false
@@ -77,7 +77,7 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "${BASE:-}" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
-            range=HEAD; echo "no usable base, scanning full history"
+            range=HEAD; echo "::warning::no usable base SHA: scanning FULL history (expected red until the history rewrite)"
           else
             range="$BASE..HEAD"
           fi
