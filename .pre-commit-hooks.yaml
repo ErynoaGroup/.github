@@ -1,0 +1,6 @@
+- id: erynoa-leak-guard
+  name: erynoa leak guard (tailnet/internal/secrets)
+  entry: leak-guard/scan.sh
+  language: script
+  pass_filenames: true
+  types: [text]

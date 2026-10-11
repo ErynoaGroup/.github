@@ -1,0 +1,107 @@
+# Reusable leak guard. Free GitHub-hosted runner only. Minimal permissions.
+# Caller: jobs.guard.uses: ErynoaGroup/.github/.github/workflows/leak-guard.yml@<sha>  with: guard_sha: <same sha>
+#         with secrets: inherit (or RAGFIT_LEAK_EXTRA: ${{ secrets.RAGFIT_LEAK_EXTRA }})
+name: leak-guard
+on:
+  workflow_call:
+    inputs:
+      allowed_mentions:
+        description: "Space-separated accounts allowed as @-mentions"
+        type: string
+        default: "ErynoaGroup NiklasJavier dependabot github-actions"
+      guard_sha:
+        description: "Pinned SHA of ErynoaGroup/.github (same as in uses:@<sha>). Fallback: job.workflow_sha"
+        type: string
+        default: ""
+      allowed_authors:
+        description: "Space-separated regexes of allowed commit author/committer emails"
+        type: string
+        default: '59505702\+NiklasJavier@users\.noreply\.github\.com noreply@github\.com niklas\.klein@erynoa\.com'
+    secrets:
+      RAGFIT_LEAK_EXTRA:
+        required: false
+permissions:
+  contents: read
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Resolve guard SHA
+        id: ref
+        env:
+          IN_SHA: ${{ inputs.guard_sha }}
+          WF_SHA: ${{ job.workflow_sha }}
+        run: |
+          sha="${IN_SHA:-$WF_SHA}"
+          if ! printf '%s' "$sha" | grep -qE '^[0-9a-f]{40}$'; then
+            echo "::error::leak-guard: no pinned guard SHA (pass with: guard_sha: <sha>)"; exit 2
+          fi
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+      - name: Checkout caller repo
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Checkout guard
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: ErynoaGroup/.github
+          ref: ${{ steps.ref.outputs.sha }}
+          path: .leak-guard-src
+          persist-credentials: false
+      - name: Verify guard SHA and self-test
+        env:
+          WANT: ${{ steps.ref.outputs.sha }}
+        run: |
+          got=$(git -C .leak-guard-src rev-parse HEAD)
+          [ "$got" = "$WANT" ] || { echo "::error::guard checkout mismatch"; exit 2; }
+          .leak-guard-src/leak-guard/test.sh
+      - name: Write extra patterns to file (never echoed)
+        env:
+          EXTRA: ${{ secrets.RAGFIT_LEAK_EXTRA }}
+        run: |
+          f="$RUNNER_TEMP/leak-extra.txt"
+          umask 077; printf '%s\n' "${EXTRA:-}" > "$f"
+          echo "LEAK_EXTRA_FILE=$f" >> "$GITHUB_ENV"
+          echo "extra patterns loaded: $(grep -cvE '^[[:space:]]*(#|$)' "$f" || true)"
+      - name: Scan tracked files
+        run: |
+          git ls-files -z -- . ':!:.leak-guard-src' | xargs -0 -r .leak-guard-src/leak-guard/scan.sh
+      - name: Scan commit messages and authors
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          ALLOW_AUTH: ${{ inputs.allowed_authors }}
+        run: |
+          set -euo pipefail
+          if [ -z "${BASE:-}" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            range=HEAD; echo "::warning::no usable base SHA: scanning FULL history (expected red until the history rewrite)"
+          else
+            range="$BASE..HEAD"
+          fi
+          fail=0
+          git log --format=%B "$range" | .leak-guard-src/leak-guard/scan.sh --stdin commit-messages || fail=$?
+          re="^($(echo "$ALLOW_AUTH" | tr ' ' '|'))$"
+          bad=$(git log --format='%ae%n%ce' "$range" | sort -u | grep -cvE "$re" || true)
+          if [ "$bad" -gt 0 ]; then echo "::error::$bad commit author/committer email(s) not in allowed list (not shown)"; [ "$fail" -ge 1 ] || fail=1; fi
+          exit "$fail"
+      - name: Scan PR title/body
+        if: github.event_name == 'pull_request'
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          ALLOW: ${{ inputs.allowed_mentions }}
+        run: |
+          set -u
+          text=$(printf '%s\n%s\n' "${PR_TITLE:-}" "${PR_BODY:-}")
+          fail=0
+          printf '%s' "$text" | .leak-guard-src/leak-guard/scan.sh --stdin pr-text || fail=1
+          allow=$(echo "$ALLOW" | tr ' ' '|')
+          n=$(printf '%s' "$text" | sed 's/`[^`]*`//g' | grep -oE '(^|[[:space:](])@[A-Za-z0-9][A-Za-z0-9-]{0,38}' | grep -vcE "@($allow)$" || true)
+          if [ "$n" -gt 0 ]; then echo "::error::$n foreign @-mention(s) in PR title/body (use a code span or drop the @)"; fail=1; fi
+          exit $fail
+      - name: Cleanup
+        if: always()
+        run: rm -f "$RUNNER_TEMP/leak-extra.txt"
